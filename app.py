@@ -45,7 +45,7 @@ app = Flask(__name__)
 CORS(app)
 
 # SQL SERVER
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://sa:Telcel4773@WasakaBegeinTv/EDUCBTAOFICIAL?driver=ODBC+Driver+17+for+SQL+Server'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 db.init_app(app)
