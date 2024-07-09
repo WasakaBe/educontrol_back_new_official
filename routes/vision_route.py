@@ -35,3 +35,16 @@ def update_welcome(id_vision):
             return jsonify({'message': 'No update data vision provided'}), 400
     except Exception as e:
         return jsonify({'error': 'Server error', 'message': str(e)}), 500
+@vision_routes.route('/vision/delete/<int:id_vision>', methods=['DELETE'])
+def delete_vision(id_vision):
+    try:
+        vision = TBL_VISION.query.get(id_vision)
+        if not vision:
+            return jsonify({'message': 'VISION not found'}), 404
+        
+        db.session.delete(vision)
+        db.session.commit()
+        return jsonify({'message': 'VISION deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Server error', 'message': str(e)}), 500

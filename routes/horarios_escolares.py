@@ -221,3 +221,25 @@ def get_horarios_por_docente(id_docente):
         return jsonify(result), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@horarios_escolares_routes.route('/horarios_escolares/delete/<int:id_horario>', methods=['DELETE'])
+def delete_horario(id_horario):
+    try:
+        # Buscar el horario por ID
+        horario = TBL_HORARIOS_ESCOLARES.query.get(id_horario)
+        if not horario:
+            return jsonify({'message': 'Horario no encontrado'}), 404
+        
+        # Eliminar el horario
+        db.session.delete(horario)
+        db.session.commit()
+        return jsonify({'message': 'Horario eliminado exitosamente'}), 200
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        print("SQLAlchemy Error:", e)  # Imprimir errores específicos de SQLAlchemy
+        return jsonify({'error': 'Database error'}), 400
+    except Exception as e:
+        db.session.rollback()
+        print("General Error:", e)  # Imprimir otros tipos de errores
+        return jsonify({'error': str(e)}), 400

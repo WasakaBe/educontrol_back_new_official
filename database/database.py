@@ -89,6 +89,8 @@ class TBL_USUARIOS(db.Model):
     idCuentaActivo = db.Column(db.Integer)
     idPregunta = db.Column(db.Integer)
     respuestaPregunta = db.Column(db.String(255))
+    foto_usuario= db.Column(db.LargeBinary)
+    
 
 class TBL_DOCENTES(db.Model):
     id_docentes = db.Column(db.Integer, primary_key=True)
@@ -209,3 +211,14 @@ class TBL_ASISTENCIAS(db.Model):
     fecha = db.Column(db.DateTime,nullable=False)
     estado_asistencia = db.Column(db.String(50),nullable=False)
     comentarios = db.Column(db.Text,nullable=False)
+    
+class TBL_CARRUSEL_IMG(db.Model):
+    id_carrusel = db.Column(db.Integer,primary_key=True)
+    carrusel = db.Column(db.LargeBinary)
+
+class TBL_MENSAJES_CONTACTOS(db.Model):
+    id_mensaje_contacto = db.Column(db.Integer,primary_key=True)
+    nombre_mensaje_contacto = db.Column(db.String(255),nullable=False)
+    correo_mensaje_contacto = db.Column(db.String(255),nullable=False)
+    motivo_mensaje_contacto = db.Column(db.Text,nullable=False)
+    fecha_mensaje = db.Column(db.DateTime,nullable=False)

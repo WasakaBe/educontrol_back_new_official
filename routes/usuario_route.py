@@ -1,11 +1,13 @@
+from werkzeug import Response
 from database.database import db, TBL_USUARIOS,BITACORA_SESION,BITACORA_USUARIOS, TBL_TIPO_ROL, TBL_SEXOS, TBL_ACTIVOS_CUENTA, TBL_PREGUNTAS
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request,current_app
 import smtplib
 import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
 import random
+from werkzeug.utils import secure_filename
 
 # Crear un blueprint para las ruta
 user_routes = Blueprint('user_routes', __name__)
@@ -135,10 +137,8 @@ def get_user_by_id(user_id):
 @user_routes.route('/users/insert', methods=['POST'])
 def create_user2():
     data = request.json
-
     # Obtener la dirección IP del usuario
     user_ip = request.remote_addr
-
     new_user2 = TBL_USUARIOS(
         nombre_usuario=data.get('nombre_usuario'),
         app_usuario=data.get('app_usuario'),
@@ -155,12 +155,9 @@ def create_user2():
         idPregunta=data.get('idPregunta'),
         respuestaPregunta=data.get('respuestaPregunta')
     )
-
-
     try:
         db.session.add(new_user2)
         db.session.commit()
-        
         # Insertar un nuevo registro en BITACORA_USUARIOS
         new_bitacora = BITACORA_USUARIOS(
             ID_USUARIO=new_user2.id_usuario,
@@ -174,11 +171,8 @@ def create_user2():
         db.session.commit()
         # Envío de correo electrónico después de agregar el usuario exitosamente
         send_email(data['correo_usuario'], 'Bienvenido a la aplicación', data['nombre_usuario'])
-
-        
         print(f"Nuevo usuario: {request.json['nombre_usuario']}")
         return jsonify({'message': 'Usuario creado exitosamente'}), 201
-
     except Exception as e:
         # Manejar errores al agregar el usuario2
         print(f"Error al agregar usuario: {str(e)}")
@@ -348,8 +342,12 @@ def send_update_notification(to, subject, user_name):
 def login():
     data = request.json
 
-    tbl_users = TBL_USUARIOS.query.filter_by(correo_usuario=data['correo_usuario']).first()
-    if tbl_users:
+    if tbl_users := TBL_USUARIOS.query.filter_by(
+        correo_usuario=data['correo_usuario']
+    ).first():
+        if tbl_users.pwd_usuario != data['pwd_usuario']:
+            return jsonify({'message': 'La contraseña no coincide'}), 401
+        image_url = f"{request.host_url}profile-image/{tbl_users.id_usuario}"
         result = {
             'id_usuario': tbl_users.id_usuario,
             'nombre_usuario': tbl_users.nombre_usuario,
@@ -363,14 +361,13 @@ def login():
             'idRol': tbl_users.idRol,
             'idSexo': tbl_users.idSexo,
             'idCuentaActivo': tbl_users.idCuentaActivo,
-            'idPregunta':tbl_users.idPregunta,
-            'respuestaPregunta':tbl_users.respuestaPregunta,
-           }
+            'idPregunta': tbl_users.idPregunta,
+            'respuestaPregunta': tbl_users.respuestaPregunta,
+            'foto_usuario': image_url  # Agregar URL de la imagen
+        }
 
-         # Enviar la notificación de inicio de sesión
         send_login_notification(tbl_users.correo_usuario, 'Notificación de inicio de sesión', tbl_users.nombre_usuario)
-        
-        # Insertar un nuevo registro en BITACORA_SESION
+
         new_sesion = BITACORA_SESION(
             ID_USUARIO=tbl_users.id_usuario,
             NOMBRE_USUARIO=tbl_users.nombre_usuario,
@@ -381,9 +378,9 @@ def login():
         )
         db.session.add(new_sesion)
         db.session.commit()
-        
+
         return jsonify({'tbl_users': result})
-    return jsonify({'message': 'Credenciales incorrectas'}), 401
+    return jsonify({'message': 'Correo no encontrado'}), 404
 
 
 @user_routes.route('/Login', methods=['POST'])
@@ -586,4 +583,125 @@ def delete_user_by_id(user_id):
         print('Error al eliminar usuario:', str(e))
         return jsonify({'error': 'Error al eliminar usuario'}), 500
     
+@user_routes.route('/update2-user/<int:user_id>', methods=['PUT'])
+def update2_user(user_id):
+    try:
+        data = request.json
 
+        # Buscar al usuario por su ID
+        tbl_user = TBL_USUARIOS.query.get(user_id)
+
+        # Verificar si el usuario existe
+        if tbl_user:
+            # Verificar si la nueva contraseña es diferente de la anterior y no es nula
+            new_password = data.get('pwd_usuario')  # Asegurarnos de obtener la nueva contraseña correctamente
+            if new_password:
+                print(f"Contraseña nueva recibida: {new_password}")
+                if tbl_user.pwd_usuario != new_password:
+                    print("Contraseña diferente de la anterior. Procediendo con la actualización.")
+
+                    # Actualizar los datos del usuario con los nuevos valores
+                    tbl_user.nombre_usuario = data.get('nombre_usuario')
+                    tbl_user.app_usuario = data.get('app_usuario')
+                    tbl_user.apm_usuario = data.get('apm_usuario')
+                    tbl_user.correo_usuario = data.get('correo_usuario')
+                    tbl_user.pwd_usuario = new_password  # Usar la nueva contraseña
+                    tbl_user.phone_usuario = data.get('phone_usuario')
+
+                    # Guardar los cambios en la base de datos
+                    db.session.commit()
+
+                    # Insertar un nuevo registro en la bitácora de usuarios
+                    new_bitacora = BITACORA_USUARIOS(
+                        ID_USUARIO=user_id,
+                        NOMBRE_USUARIO=tbl_user.nombre_usuario,
+                        ACCION_REALIZADA='Actualización',
+                        DETALLES_ACCION='Datos de usuario actualizados exitosamente',
+                        FECHA_ACCESO=datetime.now(),
+                        IP_ACCESO=request.remote_addr
+                    )
+                    db.session.add(new_bitacora)
+                    db.session.commit() 
+
+                    send_update_info_notification(tbl_user.correo_usuario, 'Notificación de Actualizacion de Informacion', tbl_user.nombre_usuario)
+                    return jsonify({'message': 'Datos de usuario actualizados exitosamente'}), 200
+                else:
+                    return jsonify({'message': 'La nueva contraseña debe ser diferente de la anterior y no puede ser nula'}), 400 
+            else:
+                return jsonify({'message': 'La nueva contraseña no puede ser nula'}), 400
+        else:
+            return jsonify({'message': 'Usuario no encontrado'}), 404
+
+    except Exception as e:
+        print('Error al actualizar datos de usuario:', str(e))
+        return jsonify({'error': 'Error al actualizar datos de usuario'}), 500
+    
+# Ruta para actualizar el usuario y la foto de perfil
+@user_routes.route('/update4-user/<int:user_id>', methods=['POST'])
+def update_user4(user_id):
+    try:
+        data = request.form
+        file = request.files.get('image')
+
+        # Buscar al usuario por su ID
+        tbl_user = TBL_USUARIOS.query.get(user_id)
+
+        # Verificar si el usuario existe
+        if not tbl_user:
+            return jsonify({'message': 'Usuario no encontrado'}), 404
+
+        # Actualizar los datos del usuario con los nuevos valores
+        tbl_user.nombre_usuario = data.get('nombre_usuario')
+        tbl_user.app_usuario = data.get('app_usuario')
+        tbl_user.apm_usuario = data.get('apm_usuario')
+        tbl_user.correo_usuario = data.get('correo_usuario')
+        tbl_user.phone_usuario = data.get('phone_usuario')
+
+        new_password = data.get('pwd_usuario')
+        if new_password and new_password != tbl_user.pwd_usuario:
+            tbl_user.pwd_usuario = new_password
+        else:
+            return jsonify({'message': 'La nueva contraseña debe ser diferente de la anterior y no puede ser nula'}), 400
+
+        # Manejar la subida de la imagen si se proporciona
+        if file:
+            if file.filename == '':
+                return jsonify({'message': 'No file selected for uploading'}), 400
+
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+
+            with open(file_path, 'rb') as file:
+                binary_data = file.read()
+
+            tbl_user.foto_usuario = binary_data
+
+        # Guardar los cambios en la base de datos
+        db.session.commit()
+
+        # Insertar un nuevo registro en la bitácora de usuarios
+        new_bitacora = BITACORA_USUARIOS(
+            ID_USUARIO=user_id,
+            NOMBRE_USUARIO=tbl_user.nombre_usuario,
+            ACCION_REALIZADA='Actualización',
+            DETALLES_ACCION='Datos de usuario actualizados exitosamente',
+            FECHA_ACCESO=datetime.now(),
+            IP_ACCESO=request.remote_addr
+        )
+        db.session.add(new_bitacora)
+        db.session.commit()
+
+        send_update_info_notification(tbl_user.correo_usuario, 'Notificación de Actualización de Información', tbl_user.nombre_usuario)
+        return jsonify({'message': 'Datos de usuario actualizados exitosamente'}), 200
+
+    except Exception as e:
+        print('Error al actualizar datos de usuario:', e)
+        return jsonify({'error': 'Error al actualizar datos de usuario'}), 500
+    
+@user_routes.route('/profile-image/<int:user_id>', methods=['GET'])
+def profile_image(user_id):
+    user = TBL_USUARIOS.query.get(user_id)
+    if not user or not user.foto_usuario:
+        return jsonify({'message': 'Usuario o imagen no encontrados'}), 404
+    return Response(user.foto_usuario, mimetype='image/jpeg')

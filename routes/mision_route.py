@@ -35,3 +35,16 @@ def update_welcome(id_mision):
             return jsonify({'message': 'No update data mision provided'}), 400
     except Exception as e:
         return jsonify({'error': 'Server error', 'message': str(e)}), 500
+
+@mision_routes.route('/mision/delete/<int:id_mision>', methods=['DELETE'])
+def delete_mision(id_mision):
+    try:
+        mision = TBL_MISION.query.get(id_mision)
+        if not mision:
+            return jsonify({'message': 'MISION not found'}), 404
+        
+        db.session.delete(mision)
+        db.session.commit()
+        return jsonify({'message': 'MISION deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()

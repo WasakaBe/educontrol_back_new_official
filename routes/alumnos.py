@@ -204,3 +204,28 @@ def get_detalle_horario(no_control, id_horario):
         }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# Ruta para buscar por número de control
+@alumnos_routes.route('/alumnos/nocontrol2/<int:no_control>', methods=['GET'])
+def get_alumno_by_nocontrol2(no_control):
+    alumno = TBL_ALUMNOS.query.filter_by(nocontrol_alumnos=no_control).first()
+    if alumno:
+        grupo_alumnos = TBL_GRUPOS.query.get(alumno.idgrupo).nombre_grupos
+        carrera_tecnica_alumnos = TBL_CARRERAS_TECNICAS.query.get(alumno.idcarreratecnica).nombre_carrera_tecnica
+        return jsonify({
+            'id_alumnos': alumno.id_alumnos,
+            'nombre_alumnos': alumno.nombre_alumnos,
+            'app_alumnos': alumno.app_alumnos,
+            'apm_alumnos': alumno.apm_alumnos,
+            'fecha_nacimiento_alumnos': alumno.fecha_nacimiento_alumnos.strftime("%Y-%m-%d"),
+            'curp_alumnos': alumno.curp_alumnos,
+            'nocontrol_alumnos': alumno.nocontrol_alumnos,
+            'telefono_alumnos': alumno.telefono_alumnos,
+            'seguro_social_alumnos': alumno.seguro_social_alumnos,
+            'grupo_alumnos': grupo_alumnos,
+            'carrera_tecnica_alumnos': carrera_tecnica_alumnos,
+        })
+    else:
+        return jsonify({'error': 'Alumno no encontrado'}), 404
+    

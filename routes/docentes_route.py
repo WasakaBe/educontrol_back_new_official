@@ -120,3 +120,25 @@ def delete_docente(id):
         return jsonify({'message': 'Docente eliminado exitosamente'})
     except Exception as e:
         return jsonify({'message': 'Error al eliminar el docente', 'error': str(e)}), 500
+
+@user_docentes_routes.route('/docentes/nocontrol/<string:noconttrol>', methods=['GET'])
+def get_docente_by_noconttrol(noconttrol):
+    docente = TBL_DOCENTES.query.filter_by(noconttrol_docentes=noconttrol).first()
+    if not docente:
+        return jsonify({'message': 'Docente no encontrado'}), 404
+    
+    result = {
+        'id_docentes': docente.id_docentes,
+        'nombre_docentes': docente.nombre_docentes,
+        'app_docentes': docente.app_docentes,
+        'apm_docentes': docente.apm_docentes,
+        'fecha_nacimiento_docentes': docente.fecha_nacimiento_docentes.strftime('%Y-%m-%d'),
+        'noconttrol_docentes': docente.noconttrol_docentes,
+        'telefono_docentes': docente.telefono_docentes,
+        'foto_docentes': docente.foto_docentes.decode('utf-8') if docente.foto_docentes else None,
+        'seguro_social_docentes': docente.seguro_social_docentes,
+        'sexo_docente': TBL_SEXOS.query.get(docente.idsexo).nombre_sexo if docente.idsexo else None,
+        'usuario_docente': TBL_USUARIOS.query.get(docente.idusuario).correo_usuario if docente.idusuario else None,
+        'clinica_docente': TBL_CLINICAS.query.get(docente.idclinica).nombre_clinicas if docente.idclinica else None
+    }
+    return jsonify(result)

@@ -34,8 +34,9 @@ def insert_carrera_tecnica():
 
     try:
         nombre_carrera = data.get('nombre_carrera_tecnica')
-        carrera_existente = TBL_CARRERAS_TECNICAS.query.filter_by(nombre_carrera_tecnica=nombre_carrera).first()
-        if carrera_existente:
+        if carrera_existente := TBL_CARRERAS_TECNICAS.query.filter_by(
+            nombre_carrera_tecnica=nombre_carrera
+        ).first():
             return jsonify({'message': f'La carrera técnica "{nombre_carrera}" ya está registrada. No se pueden repetir nombres de carrera técnica.'}), 400
 
         nueva_carrera = TBL_CARRERAS_TECNICAS(
@@ -63,9 +64,8 @@ def update_carrera_tecnica(id):
     try:
         carrera.nombre_carrera_tecnica = data.get('nombre_carrera_tecnica', carrera.nombre_carrera_tecnica)
         carrera.descripcion_carrera_tecnica = data.get('descripcion_carrera_tecnica', carrera.descripcion_carrera_tecnica)
-        
-        foto_carrera_tecnica = data.get('foto_carrera_tecnica')
-        if foto_carrera_tecnica:
+
+        if foto_carrera_tecnica := data.get('foto_carrera_tecnica'):
             carrera.foto_carrera_tecnica = foto_carrera_tecnica.encode('utf-8')
 
         db.session.commit()

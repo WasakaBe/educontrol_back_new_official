@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-
+import smtplib
+import os 
 from database.database import db
 from routes.usuario_route import user_routes
 from routes.rol_user_route import rol_routes
@@ -27,12 +28,13 @@ from routes.vision_route import vision_routes
 from routes.horarios_escolares import horarios_escolares_routes
 from routes.horario_alumnos import horario_alumnos
 from routes.asistencia_alumnos import asistencia_alumnos_routes
+from routes.user_alumnos_routes import user_alumnos_routes
+from routes.alumnos_search_routes import alumnos_search_routes
+from routes.carrusel_routes import carrusel_routes
 
 from waitress import serve
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
-import smtplib
-import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -45,8 +47,8 @@ CORS(app)
 # SQL SERVER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://sa:Telcel4773@WasakaBegeinTv/EDUCBTAOFICIAL?driver=ODBC+Driver+17+for+SQL+Server'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'uploads/'
 db.init_app(app)
-
 
 @app.errorhandler(Exception)
 def handle_error(e):
@@ -81,6 +83,9 @@ app.register_blueprint(vision_routes)
 app.register_blueprint(horarios_escolares_routes)
 app.register_blueprint(horario_alumnos)
 app.register_blueprint(asistencia_alumnos_routes)
+app.register_blueprint(user_alumnos_routes)
+app.register_blueprint(alumnos_search_routes)
+app.register_blueprint(carrusel_routes)
 @app.route('/')
 def hello_world():
     return 'API CORRIENDO EDU CONTROL CBTA5 xxxx'
