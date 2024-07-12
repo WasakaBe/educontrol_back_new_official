@@ -85,7 +85,7 @@ app.register_blueprint(horario_alumnos)
 app.register_blueprint(asistencia_alumnos_routes)
 app.register_blueprint(user_alumnos_routes)
 app.register_blueprint(alumnos_search_routes)
-app.register_blueprint(carrusel_routes)
+app.register_blueprint(carrusel_routes, url_prefix='/api')
 @app.route('/')
 def hello_world():
     return 'API CORRIENDO EDU CONTROL CBTA5 xxxx'
