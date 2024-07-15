@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Instalar dependencias del sistema
 apt-get update && apt-get install -y python3-dev build-essential
 apt-get install -y curl apt-transport-https
@@ -15,3 +15,5 @@ source venv/bin/activate
 
 # Instalar dependencias de Python
 pip install -r requirements.txt
+
+./setup.sh
