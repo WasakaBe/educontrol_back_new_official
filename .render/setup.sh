@@ -16,4 +16,4 @@ source venv/bin/activate
 # Instalar dependencias de Python
 pip install -r requirements.txt
 
-./setup.sh
+.render/setup.sh
