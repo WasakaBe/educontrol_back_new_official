@@ -31,10 +31,7 @@ from routes.asistencia_alumnos import asistencia_alumnos_routes
 from routes.user_alumnos_routes import user_alumnos_routes
 from routes.alumnos_search_routes import alumnos_search_routes
 from routes.carrusel_routes import carrusel_routes
-from routes.actividades_noticias_routes import actividades_noticias_routes
-from routes.info_inscription_routes import info_inscription_routes
-from routes.actividades_culturales_routes import actividades_culturales_routes
-from routes.sobre_nosotros_routes import sobre_nosotros_routes
+
 
 from waitress import serve
 from sqlalchemy.exc import SQLAlchemyError
@@ -91,10 +88,6 @@ app.register_blueprint(asistencia_alumnos_routes)
 app.register_blueprint(user_alumnos_routes)
 app.register_blueprint(alumnos_search_routes)
 app.register_blueprint(carrusel_routes)
-app.register_blueprint(actividades_noticias_routes)
-app.register_blueprint(info_inscription_routes)
-app.register_blueprint(actividades_culturales_routes)
-app.register_blueprint(sobre_nosotros_routes)
 
 @app.route('/')
 def hello_world():
