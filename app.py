@@ -31,13 +31,20 @@ from routes.asistencia_alumnos import asistencia_alumnos_routes
 from routes.user_alumnos_routes import user_alumnos_routes
 from routes.alumnos_search_routes import alumnos_search_routes
 from routes.carrusel_routes import carrusel_routes
+from routes.actividades_noticias_routes import actividades_noticias_routes
+from routes.info_inscription_routes import info_inscription_routes
+from routes.actividades_culturales_routes import actividades_culturales_routes
+from routes.sobre_nosotros_routes import sobre_nosotros_routes
 
 from waitress import serve
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import logging
 
+# Ajustar el nivel de registro de waitress.queue
+logging.getLogger('waitress.queue').setLevel(logging.ERROR)
 
 load_dotenv()
 
@@ -55,8 +62,6 @@ def handle_error(e):
     if isinstance(e, SQLAlchemyError):
         return jsonify({'error': 'Error de la base de datos'}), 500
     return jsonify({'error': str(e)}), 500
-
-
 
 # Registrar las rutas
 app.register_blueprint(user_routes)
@@ -85,10 +90,21 @@ app.register_blueprint(horario_alumnos)
 app.register_blueprint(asistencia_alumnos_routes)
 app.register_blueprint(user_alumnos_routes)
 app.register_blueprint(alumnos_search_routes)
-app.register_blueprint(carrusel_routes, url_prefix='/api')
+app.register_blueprint(carrusel_routes)
+app.register_blueprint(actividades_noticias_routes)
+app.register_blueprint(info_inscription_routes)
+app.register_blueprint(actividades_culturales_routes)
+app.register_blueprint(sobre_nosotros_routes)
+
 @app.route('/')
 def hello_world():
     return 'API CORRIENDO EDU CONTROL CBTA5 xxxx'
 
 if __name__ == '__main__':
-    serve(app, host='0.0.0.0', port=50002)
+    # Verificar la conexión a la base de datos antes de iniciar la aplicación
+    try:
+        with app.app_context():
+            db.create_all()
+        serve(app, host='0.0.0.0', port=50002)
+    except Exception as e:
+        print(f'Error al iniciar la aplicación: {e}')
